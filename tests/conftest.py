@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-# Only the tables and columns zotlink reads, with the real names.
+# Only the tables and columns zotero-relink reads, with the real names.
 SCHEMA = """
 CREATE TABLE libraries (libraryID INTEGER PRIMARY KEY, type TEXT NOT NULL);
 CREATE TABLE items (itemID INTEGER PRIMARY KEY, itemTypeID INT, libraryID INT NOT NULL, key TEXT NOT NULL);
@@ -56,11 +56,11 @@ class ZoteroDB:
 
 
 class FakeZotero:
-    """The Zotero Web API as zotlink uses it: items carry versions, and a write must name the current one."""
+    """The Zotero Web API as zotero-relink uses it: items carry versions, and a write must name the current one."""
 
     def __init__(self):
         self.items = {}
-        self.writes = []    # every object zotlink sent
+        self.writes = []    # every object zotero-relink sent
         self.refuse = {}    # key -> list of (code, message), one used per write attempt
 
     def add(self, key, path, title):
@@ -91,7 +91,7 @@ class FakeZotero:
         return result
 
     def bump(self, key):
-        """Someone else edited the item (a tag, say) since zotlink last looked."""
+        """Someone else edited the item (a tag, say) since zotero-relink last looked."""
         self.items[key]["version"] += 1
         self.items[key]["data"]["version"] = self.items[key]["version"]
 
@@ -103,7 +103,7 @@ class FakeZotero:
 
 
 class Env:
-    """A home folder with real files, a Zotero database, the fake API and zotlink's state file."""
+    """A home folder with real files, a Zotero database, the fake API and zotero-relink's state file."""
 
     def __init__(self, tmp):
         self.home = tmp / "home"
@@ -125,7 +125,7 @@ class Env:
         self.server.add(key, path, title)
 
     def fix(self, **kw):
-        from zotlink.fixer import fix
+        from zotero_relink.fixer import fix
         kw.setdefault("trash_dirs", [self.trash])
         return fix(self.db.path, self.state, roots=[self.home], api=self.server, **kw)
 

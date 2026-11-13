@@ -1,12 +1,12 @@
 # Contributing
 
 ```sh
-git clone https://github.com/andrewboldi/zotlink && cd zotlink
+git clone https://github.com/andrewboldi/zotero-relink && cd zotero-relink
 uv sync
 uv run pytest
 ```
 
-zotlink has no runtime dependencies beyond Python's standard library. Please keep it that way.
+zotero-relink has no runtime dependencies beyond Python's standard library. Please keep it that way.
 
 ## Two rules every change keeps
 

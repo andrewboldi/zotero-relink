@@ -1,7 +1,7 @@
-"""zotlink keeps Zotero's linked files linked when they are moved or renamed outside Zotero."""
+"""zotero-relink keeps Zotero's linked files linked when they are moved or renamed outside Zotero."""
 import json
 
-from zotlink.fixer import fix
+from zotero_relink.fixer import fix
 
 
 def remembered(env):
@@ -21,7 +21,7 @@ def test_the_first_run_remembers_every_file_and_changes_nothing(env):
 def test_a_link_whose_file_was_already_missing_is_reported_not_searched(env):
     env.link("AAAA0001", env.home / "never-here.pdf")
     report = env.fix()
-    assert [(m.key, m.reason) for m in report.missing] == [("AAAA0001", "missing before zotlink first saw it")]
+    assert [(m.key, m.reason) for m in report.missing] == [("AAAA0001", "missing before zotero-relink first saw it")]
     assert env.server.writes == []
 
 
@@ -117,7 +117,7 @@ def test_a_file_edited_and_later_copied_away_is_still_found(env):
     env.link("AAAA0001", f)
     env.fix()
     f.write_bytes(b"version two")
-    env.fix()                                   # zotlink notices the new content
+    env.fix()                                   # zotero-relink notices the new content
     copy = env.file("b/a.pdf", b"version two")
     f.unlink()
     env.fix()
@@ -251,7 +251,7 @@ def test_a_rename_in_a_deep_folder_is_found_without_searching_elsewhere(env, mon
     env.link("AAAA0001", f)
     env.fix()
     env.file("big/elsewhere/x.pdf")
-    import zotlink.finder as finder
+    import zotero_relink.finder as finder
     seen = []
     real_walk = finder.walk
     monkeypatch.setattr(finder, "walk", lambda roots, *a, **k: (seen.extend(map(str, roots)), real_walk(roots, *a, **k))[1])

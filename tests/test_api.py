@@ -4,7 +4,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 
-from zotlink.api import ZoteroAPI
+from zotero_relink.api import ZoteroAPI
 
 
 class FakeHTTP:

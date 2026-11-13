@@ -1,6 +1,6 @@
 """One pass: check every linked file, find the ones that moved, and fix their paths through the Web API.
 
-zotlink never writes zotero.sqlite. It changes a linked attachment's path (and its title, when that was
+zotero-relink never writes zotero.sqlite. It changes a linked attachment's path (and its title, when that was
 just the old file name) on zotero.org, and Zotero desktop picks the change up at its next sync.
 """
 import json
@@ -12,9 +12,9 @@ from pathlib import Path
 from .finder import find, identify
 from .library import linked_files, resolve, store
 
-NEVER_SEEN = "missing before zotlink first saw it"
+NEVER_SEEN = "missing before zotero-relink first saw it"
 CHANGED = "changed in Zotero since"
-RACE = 412  # the item changed between zotlink reading and writing it
+RACE = 412  # the item changed between zotero-relink reading and writing it
 HOUR, WEEK = 3600, 7 * 86400  # a lost file's full search waits an hour, doubling up to a week
 
 

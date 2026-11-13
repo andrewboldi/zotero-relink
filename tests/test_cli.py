@@ -1,7 +1,7 @@
-"""Finding Zotero's files, reading credentials, and running zotlink from the command line."""
+"""Finding Zotero's files, reading credentials, and running zotero-relink from the command line."""
 import json
 
-from zotlink import cli, config
+from zotero_relink import cli, config
 
 
 def make_db(env, tmp_path):

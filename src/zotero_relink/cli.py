@@ -1,8 +1,8 @@
-"""zotlink: keeps Zotero's linked files linked when you move or rename them.
+"""zotero-relink: keeps Zotero's linked files linked when you move or rename them.
 
-  zotlink           check every linked file and fix the links of files that moved
-  zotlink check     the same, but only say what would change
-  zotlink status    what the last run found
+  zotero-relink           check every linked file and fix the links of files that moved
+  zotero-relink check     the same, but only say what would change
+  zotero-relink status    what the last run found
 """
 import argparse
 import contextlib
@@ -40,7 +40,7 @@ def _lock(folder):
 
 
 def _parser():
-    p = argparse.ArgumentParser(prog="zotlink", description="Keeps Zotero's linked files linked when you "
+    p = argparse.ArgumentParser(prog="zotero-relink", description="Keeps Zotero's linked files linked when you "
                                 "move or rename them.")
     p.add_argument("command", nargs="?", default="fix", choices=["fix", "check", "status"])
     p.add_argument("--dry-run", action="store_true", help="say what would change; change nothing")
@@ -49,10 +49,10 @@ def _parser():
     p.add_argument("--root", action="append", default=[], help="where to look for moved files (default: home)")
     p.add_argument("--skip", action="append", default=[], help="a folder not to look in (repeatable)")
     p.add_argument("--trash-dir", action="append", default=[], help="a trash folder (found automatically)")
-    p.add_argument("--state", help="zotlink's state file (default: ~/.local/state/zotlink/state.json)")
+    p.add_argument("--state", help="zotero-relink's state file (default: ~/.local/state/zotero-relink/state.json)")
     p.add_argument("--env-file", help="file with ZOTERO_API_KEY and ZOTERO_USER_ID "
-                   "(default: ~/.config/zotlink/env)")
-    p.add_argument("--version", action="version", version=f"zotlink {__version__}")
+                   "(default: ~/.config/zotero-relink/env)")
+    p.add_argument("--version", action="version", version=f"zotero-relink {__version__}")
     return p
 
 
@@ -61,16 +61,16 @@ def main(argv=None, make_api=None, environ=None):
     args = _parser().parse_args(argv)
     home = Path(environ.get("HOME") or Path.home())
     state_home = Path(environ.get("XDG_STATE_HOME") or home / ".local/state")
-    state = Path(args.state) if args.state else state_home / "zotlink" / "state.json"
+    state = Path(args.state) if args.state else state_home / "zotero-relink" / "state.json"
     if args.command == "status":
         return _status(state.parent)
 
     dry = args.dry_run or args.command == "check"
     data_dir = Path(args.data_dir) if args.data_dir else config.find_data_dir(home, environ)
     if not data_dir or not (data_dir / "zotero.sqlite").exists():
-        print("zotlink: can't find zotero.sqlite. Pass --data-dir (Zotero: Settings > Advanced > Files and Folders).")
+        print("zotero-relink: can't find zotero.sqlite. Pass --data-dir (Zotero: Settings > Advanced > Files and Folders).")
         return 2
-    creds = config.credentials(environ, Path(args.env_file) if args.env_file else home / ".config/zotlink/env")
+    creds = config.credentials(environ, Path(args.env_file) if args.env_file else home / ".config/zotero-relink/env")
     api = (make_api or ZoteroAPI)(*creds) if creds and not dry else None
     roots = [Path(r) for r in args.root] or [home]
     skip = [data_dir, *map(Path, args.skip)]
@@ -80,14 +80,14 @@ def main(argv=None, make_api=None, environ=None):
     with _lock(state.parent) as ok:
         if not ok:
             return 0
-        with tempfile.TemporaryDirectory(prefix="zotlink-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="zotero-relink-") as tmp:
             copy = Path(tmp) / "zotero.sqlite"
             shutil.copy2(data_dir / "zotero.sqlite", copy)   # Zotero locks the live database
             report = fix(copy, state, roots, api, base_dir=config.find_base_dir(home), dry_run=dry,
                          trash_dirs=trash, skip=skip)
     no_key = not dry and api is None and report.relinked
     return _finish(report, state.parent, dry, no_key, args.quiet,
-                   args.env_file or home / ".config/zotlink/env")
+                   args.env_file or home / ".config/zotero-relink/env")
 
 
 def _finish(report, folder, dry, no_key, quiet, env_file):
@@ -114,10 +114,10 @@ def _finish(report, folder, dry, no_key, quiet, env_file):
     for f in report.failed:
         lines.append(f"  failed {f.key}: HTTP {f.code} {f.message}")
     if no_key:
-        lines.append(f"  zotlink can't fix these without a Zotero API key with write access ({KEYS_URL}).")
+        lines.append(f"  zotero-relink can't fix these without a Zotero API key with write access ({KEYS_URL}).")
         lines.append(f"  Put ZOTERO_API_KEY=... and ZOTERO_USER_ID=... in {env_file}.")
     if lines or not quiet:
-        print(f"zotlink: checked {report.checked} linked files; {verb} {len(report.relinked)}; "
+        print(f"zotero-relink: checked {report.checked} linked files; {verb} {len(report.relinked)}; "
               f"{len(report.missing)} missing; {len(report.waiting)} waiting for Zotero to sync")
         print("\n".join(lines)) if lines else None
     return 2 if no_key else (1 if report.failed else 0)
@@ -126,7 +126,7 @@ def _finish(report, folder, dry, no_key, quiet, env_file):
 def _status(folder):
     last = folder / "last-run.json"
     if not last.exists():
-        print("zotlink hasn't run yet.")
+        print("zotero-relink hasn't run yet.")
         return 0
     run = json.loads(last.read_text())
     print(f"last run {run['t']}: checked {run['checked']} linked files, relinked {run['relinked']}, "

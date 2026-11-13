@@ -1,4 +1,4 @@
-"""Where Zotero keeps its database and settings, and where zotlink finds its API key."""
+"""Where Zotero keeps its database and settings, and where zotero-relink finds its API key."""
 import json
 import re
 from pathlib import Path

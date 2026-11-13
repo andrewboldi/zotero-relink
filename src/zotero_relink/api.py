@@ -33,7 +33,7 @@ class ZoteroAPI:
     def __init__(self, api_key, user_id, send=urllib_send, sleep=time.sleep):
         self.base = f"{API}/users/{int(user_id)}"
         self.headers = {"Zotero-API-Key": api_key, "Zotero-API-Version": "3",
-                        "User-Agent": f"zotlink/{__version__}"}
+                        "User-Agent": f"zotero-relink/{__version__}"}
         self.send, self.sleep = send, sleep
 
     def _request(self, method, url, body=None, extra=None):
