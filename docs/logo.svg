@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="zotero-relink">
-  <rect x="18" y="10" width="44" height="58" rx="5" fill="#ffffff" stroke="#cc2936" stroke-width="5"/>
-  <path d="M28 26h24M28 36h24M28 46h14" stroke="#cc2936" stroke-width="4" stroke-linecap="round"/>
-  <g fill="none" stroke="#333333" stroke-width="7" stroke-linecap="round">
-    <path d="M52 66l8-8a10 10 0 0 1 14 14l-8 8"/>
-    <path d="M70 84l-8 8a10 10 0 0 1-14-14l8-8" transform="translate(0 -8)"/>
-    <path d="M58 78l10-10"/>
-  </g>
-</svg>

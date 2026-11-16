@@ -63,7 +63,7 @@ def run(env, tmp_path, *args, api=None, capsys=None):
     environ = {"HOME": str(tmp_path)}
     if api:
         environ.update(ZOTERO_API_KEY="k", ZOTERO_USER_ID="1")
-    code = cli.main(argv, make_api=(lambda key, uid: api) if api else None, environ=environ)
+    code = cli.main(argv, make_api=(lambda key, uid, base_url=None: api) if api else None, environ=environ)
     return code, (capsys.readouterr().out if capsys else "")
 
 
@@ -75,7 +75,7 @@ def test_fix_relinks_a_renamed_file_and_says_so(env, tmp_path, capsys):
     f.rename(new)
     code, out = run(env, tmp_path, api=env.server, capsys=capsys)
     assert code == 0 and env.server.path("AAAA0001") == str(new)
-    assert "relinked 1" in out and str(new) in out
+    assert "relinked 1" in out and "~/home/a.pdf -> ~/home/b.pdf" in out
 
 
 def test_fix_reads_a_copy_and_leaves_the_database_alone(env, tmp_path, capsys):
@@ -149,3 +149,24 @@ def test_every_relink_is_logged(env, tmp_path, capsys):
     lines = [json.loads(line) for line in (env.state.parent / "log.jsonl").read_text().splitlines()]
     assert [(e["key"], e["old"], e["new"], e["how"]) for e in lines] == [
         ("AAAA0001", str(f), str(f.with_name("b.pdf")), "inode")]
+
+
+def test_ZOTERO_API_URL_points_zotero_relink_at_another_server(env, tmp_path, capsys):
+    seen = []
+    env.link("AAAA0001", env.file("a.pdf"))
+    data = make_db(env, tmp_path)
+    argv = ["--data-dir", str(data), "--root", str(env.home), "--state", str(env.state), "--trash-dir", str(env.trash)]
+    cli.main(argv, make_api=lambda key, uid, base_url=None: seen.append(base_url) or env.server,
+             environ={"HOME": str(tmp_path), "ZOTERO_API_KEY": "k", "ZOTERO_USER_ID": "1",
+                      "ZOTERO_API_URL": "http://127.0.0.1:8765"})
+    assert seen == ["http://127.0.0.1:8765"]
+
+
+def test_status_shows_paths_under_home_with_a_tilde(env, tmp_path, capsys):
+    f = env.file("a.pdf")
+    env.link("AAAA0001", f)
+    run(env, tmp_path, api=env.server, capsys=capsys)
+    f.unlink()
+    run(env, tmp_path, api=env.server, capsys=capsys)
+    cli.main(["status", "--state", str(env.state)], environ={"HOME": str(tmp_path)})
+    assert "~/home/a.pdf (not found)" in capsys.readouterr().out

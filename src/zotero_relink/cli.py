@@ -63,7 +63,7 @@ def main(argv=None, make_api=None, environ=None):
     state_home = Path(environ.get("XDG_STATE_HOME") or home / ".local/state")
     state = Path(args.state) if args.state else state_home / "zotero-relink" / "state.json"
     if args.command == "status":
-        return _status(state.parent)
+        return _status(state.parent, home)
 
     dry = args.dry_run or args.command == "check"
     data_dir = Path(args.data_dir) if args.data_dir else config.find_data_dir(home, environ)
@@ -71,7 +71,8 @@ def main(argv=None, make_api=None, environ=None):
         print("zotero-relink: can't find zotero.sqlite. Pass --data-dir (Zotero: Settings > Advanced > Files and Folders).")
         return 2
     creds = config.credentials(environ, Path(args.env_file) if args.env_file else home / ".config/zotero-relink/env")
-    api = (make_api or ZoteroAPI)(*creds) if creds and not dry else None
+    api_url = environ.get("ZOTERO_API_URL")  # another Zotero-compatible server (tests, the demo)
+    api = (make_api or ZoteroAPI)(*creds, base_url=api_url) if creds and not dry else None
     roots = [Path(r) for r in args.root] or [home]
     skip = [data_dir, *map(Path, args.skip)]
     trash = [Path(t) for t in args.trash_dir] or [d for d in (home / ".local/share/Trash/files", home / ".Trash")
@@ -87,10 +88,16 @@ def main(argv=None, make_api=None, environ=None):
                          trash_dirs=trash, skip=skip)
     no_key = not dry and api is None and report.relinked
     return _finish(report, state.parent, dry, no_key, args.quiet,
-                   args.env_file or home / ".config/zotero-relink/env")
+                   args.env_file or home / ".config/zotero-relink/env", home)
 
 
-def _finish(report, folder, dry, no_key, quiet, env_file):
+def _short(path, home):
+    """A path under the home folder as ~/..., which is easier to read."""
+    h = str(home).rstrip(os.sep)
+    return "~" + path[len(h):] if str(path).startswith(h + os.sep) else str(path)
+
+
+def _finish(report, folder, dry, no_key, quiet, env_file, home):
     stamp = time.strftime("%Y-%m-%d %H:%M:%S")
     before = {}
     if (folder / "last-run.json").exists():
@@ -107,15 +114,15 @@ def _finish(report, folder, dry, no_key, quiet, env_file):
     lines = []
     verb = "would relink" if dry or no_key else "relinked"
     for r in report.relinked:
-        lines.append(f"  {verb} {r.key}: {r.old} -> {r.new} (same {r.how})")
+        lines.append(f"  {verb} {r.key}: {_short(r.old, home)} -> {_short(r.new, home)} (same {r.how})")
     for m in report.missing:
         if not quiet or before.get(m.key) != m.reason:
-            lines.append(f"  missing {m.key}: {m.path} ({m.reason})")
+            lines.append(f"  missing {m.key}: {_short(m.path, home)} ({m.reason})")
     for f in report.failed:
         lines.append(f"  failed {f.key}: HTTP {f.code} {f.message}")
     if no_key:
         lines.append(f"  zotero-relink can't fix these without a Zotero API key with write access ({KEYS_URL}).")
-        lines.append(f"  Put ZOTERO_API_KEY=... and ZOTERO_USER_ID=... in {env_file}.")
+        lines.append(f"  Put ZOTERO_API_KEY=... and ZOTERO_USER_ID=... in {_short(env_file, home)}.")
     if lines or not quiet:
         print(f"zotero-relink: checked {report.checked} linked files; {verb} {len(report.relinked)}; "
               f"{len(report.missing)} missing; {len(report.waiting)} waiting for Zotero to sync")
@@ -123,7 +130,7 @@ def _finish(report, folder, dry, no_key, quiet, env_file):
     return 2 if no_key else (1 if report.failed else 0)
 
 
-def _status(folder):
+def _status(folder, home):
     last = folder / "last-run.json"
     if not last.exists():
         print("zotero-relink hasn't run yet.")
@@ -132,7 +139,7 @@ def _status(folder):
     print(f"last run {run['t']}: checked {run['checked']} linked files, relinked {run['relinked']}, "
           f"{len(run['missing'])} missing, {len(run['waiting'])} waiting for Zotero to sync")
     for m in run["missing"]:
-        print(f"  missing {m['key']}: {m['path']} ({m['reason']})")
+        print(f"  missing {m['key']}: {_short(m['path'], home)} ({m['reason']})")
     for f in run["failed"]:
         print(f"  failed {f['key']}: HTTP {f['code']} {f['message']}")
     return 0

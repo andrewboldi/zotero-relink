@@ -53,6 +53,8 @@ your home folder; repeatable), `--skip` (a folder not to look in), `--env-file` 
 `~/.config/zotero-relink/env`), `--quiet`.
 
 The API key is read from `ZOTERO_API_KEY` and `ZOTERO_USER_ID`, in the environment or in the env file.
+`ZOTERO_API_URL` points zotero-relink at another Zotero-compatible server; the demo uses a local
+stand-in.
 
 ## Uninstall
 

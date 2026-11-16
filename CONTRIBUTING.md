@@ -26,3 +26,9 @@ zotero-relink has no runtime dependencies beyond Python's standard library. Plea
 - Group libraries (the API path is `/groups/<id>` instead of `/users/<id>`).
 - Windows: `st_ino` is the NTFS file ID there, and scheduling would use Task Scheduler.
 - A desktop notification when a file can't be found.
+
+## The demo GIF
+
+`demo/record.sh` records `assets/demo.gif` (it needs tmux, asciinema and agg). It plays the scene in a
+throwaway world: a temporary home folder, a tiny Zotero library, and a stand-in for the Web API on
+localhost (`ZOTERO_API_URL`). No real library is touched.

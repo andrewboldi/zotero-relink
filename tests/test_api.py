@@ -83,3 +83,9 @@ def test_writes_go_fifty_objects_at_a_time():
                      (200, {}, {"successful": {str(j): {} for j in range(10)}})])
     result = client(http).update_items(objs)
     assert [len(r["body"]) for r in http.requests] == [50, 10] and len(result["successful"]) == 60
+
+
+def test_the_api_address_can_point_elsewhere():
+    http = FakeHTTP([(200, {}, [])])
+    ZoteroAPI("k", 5, send=http, sleep=lambda s: None, base_url="http://127.0.0.1:8765/").get_items(["ABCD1234"])
+    assert http.requests[0]["url"].startswith("http://127.0.0.1:8765/users/5/items?")

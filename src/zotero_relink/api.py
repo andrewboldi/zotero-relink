@@ -30,8 +30,8 @@ def _header(headers, name):
 
 
 class ZoteroAPI:
-    def __init__(self, api_key, user_id, send=urllib_send, sleep=time.sleep):
-        self.base = f"{API}/users/{int(user_id)}"
+    def __init__(self, api_key, user_id, send=urllib_send, sleep=time.sleep, base_url=None):
+        self.base = f"{(base_url or API).rstrip('/')}/users/{int(user_id)}"
         self.headers = {"Zotero-API-Key": api_key, "Zotero-API-Version": "3",
                         "User-Agent": f"zotero-relink/{__version__}"}
         self.send, self.sleep = send, sleep

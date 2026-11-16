@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="zotero-relink: a chain link with a bandage on it">
+  <g transform="translate(3 -3)">
+  <!-- a chain link -->
+  <g fill="none" stroke="#cc2936" stroke-width="11" stroke-linecap="round">
+    <rect x="17" y="64" width="62" height="30" rx="15" transform="rotate(-45 48 79)"/>
+    <rect x="49" y="34" width="62" height="30" rx="15" transform="rotate(-45 80 49)"/>
+  </g>
+  <!-- with a bandage on it -->
+  <g transform="translate(-17 17) rotate(45 64 64)">
+    <rect x="21" y="50" width="86" height="30" rx="15" fill="#000" opacity="0.18"/>
+    <rect x="21" y="48" width="86" height="32" rx="16" fill="#f3bf8b" stroke="#a96a36" stroke-width="2.5"/>
+    <path d="M32 52.5h64" stroke="#fbdcb9" stroke-width="2" stroke-linecap="round"/>
+    <rect x="49" y="51.5" width="30" height="25" rx="5" fill="#fdeedd" stroke="#d6a06a" stroke-width="1.5"/>
+    <g fill="#ecd2b2">
+      <circle cx="56" cy="58" r="1.3"/><circle cx="64" cy="58" r="1.3"/><circle cx="72" cy="58" r="1.3"/>
+      <circle cx="56" cy="64" r="1.3"/><circle cx="64" cy="64" r="1.3"/><circle cx="72" cy="64" r="1.3"/>
+      <circle cx="56" cy="70" r="1.3"/><circle cx="64" cy="70" r="1.3"/><circle cx="72" cy="70" r="1.3"/>
+    </g>
+    <g fill="#c4874f">
+      <circle cx="30" cy="58.5" r="1.8"/><circle cx="36.5" cy="58.5" r="1.8"/><circle cx="43" cy="58.5" r="1.8"/>
+      <circle cx="30" cy="69.5" r="1.8"/><circle cx="36.5" cy="69.5" r="1.8"/><circle cx="43" cy="69.5" r="1.8"/>
+      <circle cx="85" cy="58.5" r="1.8"/><circle cx="91.5" cy="58.5" r="1.8"/><circle cx="98" cy="58.5" r="1.8"/>
+      <circle cx="85" cy="69.5" r="1.8"/><circle cx="91.5" cy="69.5" r="1.8"/><circle cx="98" cy="69.5" r="1.8"/>
+    </g>
+  </g>
+  </g>
+</svg>
