@@ -127,7 +127,8 @@ class Env:
     def fix(self, **kw):
         from zotero_relink.fixer import fix
         kw.setdefault("trash_dirs", [self.trash])
-        return fix(self.db.path, self.state, roots=[self.home], api=self.server, **kw)
+        roots = kw.pop("roots", [self.home])
+        return fix(self.db.path, self.state, roots=roots, api=self.server, **kw)
 
 
 @pytest.fixture

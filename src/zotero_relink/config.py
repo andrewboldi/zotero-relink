@@ -1,5 +1,6 @@
 """Where Zotero keeps its database and settings, and where zotero-relink finds its API key."""
 import json
+import os
 import re
 from pathlib import Path
 
@@ -67,3 +68,45 @@ def credentials(environ, env_file):
     key = environ.get("ZOTERO_API_KEY") or file.get("ZOTERO_API_KEY")
     uid = environ.get("ZOTERO_USER_ID") or file.get("ZOTERO_USER_ID")
     return (key, int(uid)) if key and uid else None
+
+
+# Where external drives get mounted: Linux desktops (udisks), plain mounts, macOS.
+DRIVE_BASES = ["/media/{user}", "/run/media/{user}", "/media", "/mnt", "/Volumes"]
+
+
+def find_drives(user, bases=DRIVE_BASES, ismount=os.path.ismount):
+    """Mounted external drives, which are searched along with the home folder."""
+    out = []
+    for base in bases:
+        try:
+            entries = sorted(Path(base.format(user=user)).iterdir())
+        except OSError:
+            continue
+        for d in entries:
+            if d.name.startswith(".") or d in out or not d.is_dir() or not ismount(d):
+                continue
+            if os.path.realpath(d) != "/":  # macOS lists the startup disk in /Volumes too
+                out.append(d)
+    return out
+
+
+def offline_check(user, bases=DRIVE_BASES, ismount=os.path.ismount):
+    """A test for paths on an external drive that isn't mounted right now."""
+    roots = [base.format(user=user).rstrip("/") for base in bases]
+
+    def offline(path):
+        for root in roots:
+            if str(path).startswith(root + "/"):
+                return not ismount(Path(root) / str(path)[len(root) + 1:].split("/")[0])
+        return False
+    return offline
+
+
+def drive_trash(drives, uid):
+    """Trash folders on drives (freedesktop and macOS layouts)."""
+    found = []
+    for d in drives:
+        for t in (d / f".Trash-{uid}" / "files", d / ".Trash" / str(uid) / "files", d / ".Trashes" / str(uid)):
+            if t.is_dir():
+                found.append(t)
+    return found

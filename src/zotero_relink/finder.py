@@ -72,7 +72,9 @@ def _scan(entries, wanted):
             continue
         for key in by_ino.get(st.st_ino, ()):
             rec = wanted[key][1]
-            if st.st_dev == rec["dev"] and st.st_size == rec["size"]:
+            # Same inode, size and modification time: the same file. (FAT and exFAT drives make inode
+            # numbers up and may reuse them; a file that also changed is checked by content instead.)
+            if st.st_dev == rec["dev"] and st.st_size == rec["size"] and st.st_mtime_ns == rec["mtime_ns"]:
                 inode_hits[key].append(e.path)
         if st.st_size in sizes:
             same_size[st.st_size].append(e.path)

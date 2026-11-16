@@ -14,9 +14,11 @@ Each run (every 10 minutes, and soon after login) does one pass. Every step only
 3. **Find the files that moved.** For each linked file that is missing, zotero-relink looks in this order:
    - **Near where it was.** It searches the closest folder that still exists, which covers renames and
      most moves in milliseconds.
-   - **Everywhere under your home folder.** Hidden folders and Zotero's own data folder are skipped.
+   - **Everywhere under your home folder and on mounted external drives** (`/media`, `/run/media`, `/mnt`,
+     `/Volumes`). Hidden folders and Zotero's own data folder are skipped.
    - **By inode first.** A rename or a move on the same disk keeps the inode, so the file is certain.
-     The size must match as well, so an inode number reused by an unrelated file is never taken.
+     The size and modification time must match as well, so an inode number reused by an unrelated file
+     (FAT and exFAT drives make them up) is never taken.
    - **Then by content.** A copy, a move to another disk, or a checkout by `git` gives a new inode but
      keeps the SHA-256.
 
@@ -26,6 +28,8 @@ Each run (every 10 minutes, and soon after login) does one pass. Every step only
    A file that can't be found is searched for everywhere again after an hour, then after 2, 4 and so on,
    up to once a week. The nearby search still runs every time. A file found in the trash is reported as
    being in the trash.
+   A file on an external drive that isn't plugged in is reported as such and left alone, so a copy
+   elsewhere never replaces it.
 
 4. **Fix the link.**
    - zotero-relink reads the attachment from zotero.org.

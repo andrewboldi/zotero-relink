@@ -1,5 +1,6 @@
 """zotero-relink keeps Zotero's linked files linked when they are moved or renamed outside Zotero."""
 import json
+import os
 
 from zotero_relink.fixer import fix
 
@@ -383,3 +384,48 @@ def test_a_dry_run_needs_no_api(env):
     f.rename(f.with_name("b.pdf"))
     report = fix(env.db.path, env.state, roots=[env.home], api=None, dry_run=True, trash_dirs=[env.trash])
     assert len(report.relinked) == 1
+
+
+# ---- external drives ----
+
+def test_a_file_moved_onto_an_external_drive_is_followed(env, tmp_path):
+    drive = tmp_path / "drive"
+    drive.mkdir()
+    f = env.file("Papers/a.pdf", b"a big pdf")
+    env.link("AAAA0001", f)
+    env.fix(roots=[env.home, drive])
+    dest = drive / "Papers" / "a.pdf"
+    dest.parent.mkdir()
+    dest.write_bytes(f.read_bytes())    # moving between disks is a copy and a delete
+    f.unlink()
+    env.fix(roots=[env.home, drive])
+    assert env.server.path("AAAA0001") == str(dest)
+
+
+def test_a_file_on_an_unplugged_drive_is_left_alone(env, tmp_path):
+    drive = tmp_path / "drive"
+    drive.mkdir()
+    f = drive / "a.pdf"
+    f.write_bytes(b"lives on the drive")
+    env.link("AAAA0001", f)
+    env.file("Backup/a.pdf", b"lives on the drive")      # an identical copy at home
+    env.fix(roots=[env.home, drive])
+    drive.rename(tmp_path / "unplugged")                  # the drive goes away
+    report = env.fix(roots=[env.home], offline=lambda p: p.startswith(str(drive) + "/"))
+    assert env.server.writes == []
+    assert [m.reason for m in report.missing] == ["its drive isn't connected"]
+
+
+def test_an_inode_match_also_needs_the_same_modification_time(env):
+    # FAT and exFAT drives make inode numbers up, so a number can come back on another file.
+    f = env.file("a.pdf", b"12345")
+    env.link("AAAA0001", f)
+    env.fix()
+    other = env.file("other.pdf", b"54321")                # same size, other content
+    os.utime(other, ns=(1_000_000_000, 1_000_000_000))
+    state = json.loads(env.state.read_text())
+    state["files"]["AAAA0001"]["ino"] = other.stat().st_ino
+    env.state.write_text(json.dumps(state))
+    f.unlink()
+    report = env.fix()
+    assert env.server.writes == [] and [m.reason for m in report.missing] == ["not found"]

@@ -13,6 +13,7 @@ from .finder import find, identify
 from .library import linked_files, resolve, store
 
 NEVER_SEEN = "missing before zotero-relink first saw it"
+AWAY = "its drive isn't connected"
 CHANGED = "changed in Zotero since"
 RACE = 412  # the item changed between zotero-relink reading and writing it
 HOUR, WEEK = 3600, 7 * 86400  # a lost file's full search waits an hour, doubling up to a week
@@ -68,7 +69,9 @@ def save_state(path, state):
     os.replace(tmp, path)
 
 
-def fix(db_path, state_path, roots, api, *, base_dir=None, dry_run=False, trash_dirs=(), skip=(), now=None):
+def fix(db_path, state_path, roots, api, *, base_dir=None, dry_run=False, trash_dirs=(), skip=(), now=None,
+        offline=None):
+    """offline(path) says a path is on a drive that isn't plugged in; such files are left alone."""
     now = time.time() if now is None else now
     state = load_state(state_path)
     files, pending, lost = state["files"], state["pending"], state.setdefault("lost", {})
@@ -84,6 +87,9 @@ def fix(db_path, state_path, roots, api, *, base_dir=None, dry_run=False, trash_
             lost.pop(key, None)
             if pending.get(key, {}).get("to") == link.stored:
                 del pending[key]  # Zotero desktop has synced the fix
+            continue
+        if offline and link.path and offline(link.path):
+            report.missing.append(Missing(key, link.path, AWAY))
             continue
         pend = pending.get(key)
         if pend and pend["from"] == link.stored and os.path.isfile(resolve(pend["to"], base_dir)):

@@ -170,3 +170,29 @@ def test_status_shows_paths_under_home_with_a_tilde(env, tmp_path, capsys):
     run(env, tmp_path, api=env.server, capsys=capsys)
     cli.main(["status", "--state", str(env.state)], environ={"HOME": str(tmp_path)})
     assert "~/home/a.pdf (not found)" in capsys.readouterr().out
+
+
+# ---- external drives ----
+
+def test_mounted_drives_are_found(tmp_path):
+    media = tmp_path / "media" / "andrew"
+    (media / "SANDISK").mkdir(parents=True)
+    (media / "not-mounted").mkdir()
+    (media / ".hidden").mkdir()
+    found = config.find_drives("andrew", bases=[str(tmp_path / "media" / "{user}")],
+                               ismount=lambda p: p.name in ("SANDISK", ".hidden"))
+    assert found == [media / "SANDISK"]
+
+
+def test_a_path_on_a_drive_that_is_not_mounted_is_offline(tmp_path):
+    offline = config.offline_check("andrew", bases=[str(tmp_path / "media" / "{user}")], ismount=lambda p: False)
+    assert offline(str(tmp_path / "media" / "andrew" / "SANDISK" / "a.pdf"))
+    assert not offline(str(tmp_path / "home" / "a.pdf"))
+    online = config.offline_check("andrew", bases=[str(tmp_path / "media" / "{user}")], ismount=lambda p: True)
+    assert not online(str(tmp_path / "media" / "andrew" / "SANDISK" / "a.pdf"))
+
+
+def test_trash_folders_on_drives_are_found(tmp_path):
+    d = tmp_path / "SANDISK"
+    (d / ".Trash-1000" / "files").mkdir(parents=True)
+    assert config.drive_trash([d], 1000) == [d / ".Trash-1000" / "files"]

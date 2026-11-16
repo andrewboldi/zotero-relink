@@ -12,8 +12,12 @@
   has a new size and new content at a new path, so zotero-relink can't be sure it's the same file and reports
   it instead.
 - **Hidden folders aren't searched.** Snap and Flatpak builds of Zotero can't open files there anyway.
-- **Search roots.** By default zotero-relink looks under your home folder. Files moved to another disk are
-  found if you add that disk with `--root`.
+- **Search roots.** By default zotero-relink looks under your home folder and on mounted external drives.
+  Add other places with `--root` (repeatable; it replaces the defaults).
+- **Snap and Flatpak Zotero can't open files on external drives until you allow it.** zotero-relink will
+  fix the link either way; Zotero needs the permission to open the file:
+  - Snap: `sudo snap connect zotero-snap:removable-media`
+  - Flatpak: `flatpak override --user --filesystem=/media --filesystem=/run/media org.zotero.Zotero`
 - **The first run reads every linked file once**, to record its SHA-256. With a few thousand PDFs that
   takes a minute or two. Later runs read only files that changed.
 - **Windows** isn't tested yet. Contributions are welcome.

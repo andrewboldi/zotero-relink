@@ -73,10 +73,12 @@ def main(argv=None, make_api=None, environ=None):
     creds = config.credentials(environ, Path(args.env_file) if args.env_file else home / ".config/zotero-relink/env")
     api_url = environ.get("ZOTERO_API_URL")  # another Zotero-compatible server (tests, the demo)
     api = (make_api or ZoteroAPI)(*creds, base_url=api_url) if creds and not dry else None
-    roots = [Path(r) for r in args.root] or [home]
+    user = environ.get("USER") or home.name
+    drives = [] if args.root else config.find_drives(user)
+    roots = [Path(r) for r in args.root] or [home, *drives]
     skip = [data_dir, *map(Path, args.skip)]
     trash = [Path(t) for t in args.trash_dir] or [d for d in (home / ".local/share/Trash/files", home / ".Trash")
-                                                   if d.is_dir()]
+                                                   if d.is_dir()] + config.drive_trash(drives, getattr(os, "getuid", lambda: 0)())
 
     with _lock(state.parent) as ok:
         if not ok:
@@ -85,7 +87,7 @@ def main(argv=None, make_api=None, environ=None):
             copy = Path(tmp) / "zotero.sqlite"
             shutil.copy2(data_dir / "zotero.sqlite", copy)   # Zotero locks the live database
             report = fix(copy, state, roots, api, base_dir=config.find_base_dir(home), dry_run=dry,
-                         trash_dirs=trash, skip=skip)
+                         trash_dirs=trash, skip=skip, offline=config.offline_check(user))
     no_key = not dry and api is None and report.relinked
     return _finish(report, state.parent, dry, no_key, args.quiet,
                    args.env_file or home / ".config/zotero-relink/env", home)
